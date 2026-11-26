@@ -97,7 +97,7 @@ body.snapping #snapArea{width:max-content;min-width:760px}body.snapping #snapAre
   <img class="hero" id="hero1" alt="Apps Winter EOSS Tracker (Jharkhand)">
   <div class="glass" style="padding:18px;margin-top:14px">
     <div style="font-weight:900;color:var(--blue);font-size:18px">Sign in</div>
-    <div class="sub">Same login as the Leave Planner: your E-Code and PIN</div>
+    <div class="sub">Sign in with your E-Code and EOSS PIN</div>
     <label for="lEmp">E-Code</label><input id="lEmp" inputmode="numeric" autocomplete="username" placeholder="e.g. 6099163">
     <label for="lPin">PIN</label><input id="lPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="First time: 1234">
     <div class="err" id="lErr"></div>
@@ -133,7 +133,7 @@ body.snapping #snapArea{width:max-content;min-width:760px}body.snapping #snapAre
 
 <script>
 /* ===== SETTINGS ===== */
-var API_URL = 'https://script.google.com/macros/s/AKfycbyciJi8YKGcMxvhFY86JgshuQXhttb1R9YezYvzMCMIAw1EGE9Rl-VQpQ_tesPF1CqRFw/exec';               // Google Apps Script URL (empty = sample mode in this browser)
+var API_URL = 'https://script.google.com/macros/s/AKfycbwSPywNdYSR_1iM2Y0tnzWtnN9qD2upx8nHpg1pif3qvTwBxiY3qkeIF8QOf9zQamGU/exec';               // Google Apps Script URL (empty = sample mode in this browser)
 var DAILY_TARGET_PCT = 5;
 var STOCK_VERSION = '26nov';       // daily sell-thru target = 5% of opening EOSS stock qty
 /* ==================== */
@@ -445,14 +445,14 @@ function doLogin(){
   var e=$('lEmp').value.trim(),p=$('lPin').value.trim();$('lErr').textContent='';
   if(!e||!p){$('lErr').textContent='Enter E-Code and PIN.';return;}
   $('lBtn').disabled=true;
-  api('login',{emp:e,pin:p}).then(function(r){S.view='dash';S.divStore=null;S.date=null;S.token=r.token;S.user=r.user;ls('eoss_tok',r.token);$('lPin').value='';showApp();if(r.mustChange)openPin(true);})
+  api('login',{emp:e,pin:p}).then(function(r){S.view='dash';S.divStore=null;S.date=null;S.token=r.token;S.user=r.user;ls('eoss_tok2',r.token);$('lPin').value='';showApp();if(r.mustChange)openPin(true);})
   .catch(function(er){$('lErr').textContent=er.message;}).then(function(){$('lBtn').disabled=false;});
 }
-function logout(){S.view='dash';S.token=null;S.data=null;ls('eoss_tok',null);$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');}
+function logout(){S.view='dash';S.token=null;S.data=null;ls('eoss_tok2',null);$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');}
 function openPin(force){$('pinModal').classList.remove('hidden');$('pErr').textContent='';['pOld','pNew','pNew2'].forEach(function(i){$(i).value='';});$('pinNote').textContent=force?'First sign-in: please set your own PIN (not 1234).':'';$('pCancel').classList.toggle('hidden',!!force);}
 function closePin(){$('pinModal').classList.add('hidden');}
 function savePin(){if($('pNew').value!==$('pNew2').value){$('pErr').textContent='New PINs do not match.';return;}
-  api('changePin',{oldPin:$('pOld').value,newPin:$('pNew').value}).then(function(r){S.token=r.token;ls('eoss_tok',r.token);closePin();toast('PIN changed');}).catch(function(e){$('pErr').textContent=e.message;});}
+  api('changePin',{oldPin:$('pOld').value,newPin:$('pNew').value}).then(function(r){S.token=r.token;ls('eoss_tok2',r.token);closePin();toast('PIN changed');}).catch(function(e){$('pErr').textContent=e.message;});}
 function showApp(){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');refresh();}
 function refresh(){
   return api('eossLoad').then(function(d){return (ST?Promise.resolve():loadStock(d.key)).then(function(){return d;});}).then(function(d){
@@ -632,7 +632,7 @@ function dlCsv(){var rs=rows(S.date),L=[['Date','Store','Name','Opening stock','
   if(!API_URL){$('demobar').classList.remove('hidden');$('demoHint').classList.remove('hidden');
     $('demoHint').innerHTML='<b>Sample logins</b>: AM <b>6025872</b> · any SM/ASM/DM: their <b>E-Code</b> (e.g. HJ04 SM <b>6099163</b>). First PIN <b>1234</b>.';}
   $('lPin').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
-  var t=ls('eoss_tok');if(t){S.token=t;showApp();}
+  var t=ls('eoss_tok2');if(t){S.token=t;showApp();}
 })();
 </script>
 </body>
