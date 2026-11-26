@@ -1,0 +1,15 @@
+{
+  "name": "Apps Winter EOSS Tracker – Jharkhand",
+  "short_name": "EOSS Tracker",
+  "description": "Apps Winter EOSS sell-thru tracker – Jharkhand stores",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#d9d5f3",
+  "theme_color": "#5b7fd6",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
