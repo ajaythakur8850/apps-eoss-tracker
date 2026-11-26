@@ -82,7 +82,7 @@ tr.tot td{font-weight:900;background:#f4f6fa}
 .toolbar select{width:auto}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.tab{border:1px solid rgba(255,255,255,.8);background:rgba(255,255,255,.75);color:#36506b;padding:9px 16px;border-radius:20px;font-weight:700;cursor:pointer}.tab.on{background:#0068A9;color:#fff;border-color:#0068A9}
 .snaphead{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;align-items:baseline;margin-bottom:10px;font-size:13px}.snaphead b{color:var(--blue);letter-spacing:.03em}.snaphead span{color:var(--mut);font-size:12px}
-body.snapping #snapArea{width:max-content;min-width:760px}body.snapping #snapArea .tw{overflow:visible}body.snapping #snapArea > div.sub{display:none}
+body.snapping #snapArea{width:max-content;min-width:760px}body.snapping #snapArea .tw{overflow:visible}body.snapping #snapArea > div.sub{display:none}.snaponly{display:none}body.snapping .snaponly{display:block!important}body.snapping #snapTiles{flex:0 0 auto;width:900px;max-width:none}body.snapping #snapTiles .stiles{grid-template-columns:repeat(4,minmax(0,1fr))}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1d2433;color:#fff;padding:10px 16px;border-radius:10px;z-index:99;font-size:13px}
 .drop{border:2px dashed #9fb4d3;border-radius:12px;padding:26px;text-align:center;background:#f7faff}
 .modal{position:fixed;inset:0;background:rgba(20,30,60,.45);display:grid;place-items:center;z-index:50;padding:16px}
@@ -513,14 +513,14 @@ function vDash(){
   h+='<div class="grid2"><div class="glass pad"><h2>DIVISION <em>SELL-THRU</em> TODAY</h2><div class="bars">'+dv.map(function(x){var c=col(x.p);
     return '<div class="bg"><div class="bp"><div class="bar" style="height:'+Math.max(2,x.p/mx*150)+'px;background:'+c[0]+'"><i>'+pc(x.p)+'</i></div></div><div class="bl">'+esc(x.n)+'<br><b>'+x.sold+'</b>/'+x.o+'</div></div>';}).join('')+
    '</div>'+legend()+'</div>';
-  h+='<div class="glass pad"><h2>STORE <em>SELL-THRU</em> TODAY</h2><div class="stiles">'+rs.map(function(r){var c=col(r.st);
+  h+='<div class="glass pad" id="snapTiles"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px"><h2 style="margin:0">STORE <em>SELL-THRU</em> TODAY</h2><button class="btn sm nosnap" onclick="snapshot(\'snapTiles\',\'Store-tiles\')">📷 Snapshot for WhatsApp</button></div><div class="snaponly sub" style="margin:-6px 0 10px">Apps Winter EOSS · '+fDay(S.date)+(lastUpload()?' · Last update '+fT(lastUpload().at):'')+'</div><div class="stiles">'+rs.map(function(r){var c=col(r.st);
     return '<button class="st" style="background:'+c[0]+';color:'+c[1]+(r.s===me?';outline:3px solid #C2006F;outline-offset:1px':'')+'" onclick="go(\'store\',\''+r.s+'\')"><span class="p">'+pc(r.st)+'</span><span class="nm">'+r.s+'-'+esc(r.name)+'</span><span class="ln"><span>Target</span><b>'+n0(r.tgt)+'</b></span><span class="ln"><span>Sale Qty</span><b>'+n0(r.today)+'</b></span><span class="ln"><span>Sale Value</span><b>₹'+n0(r.val)+'</b></span></button>';}).join('')+
    '</div>'+legend()+'</div></div>';
   return h;
 }
 function vStores(){
   var rs=rows(S.date),t=totals(rs),me=myStore();
-  return dateBar('<button class="btn ghost sm" onclick="dlCsv()">Download Excel (CSV)</button> <button class="btn sm" onclick="snapshot()">📷 Snapshot for WhatsApp</button>')+'<div class="glass pad" id="snapArea"><div class="snaphead"><b>APPS WINTER EOSS · STORE-WISE SELL-THRU</b><span>'+fDay(S.date)+' · '+(function(){var u=lastUpload();return u?'Last update '+fD(u.at.slice(0,10))+', '+fT(u.at):'';})()+'</span></div><div class="tw"><table><thead><tr><th>Store</th><th>Opening stock</th><th>Target</th><th>Sale qty</th><th>Sale value</th><th>Sell-thru</th><th>Balance stock</th><th>Updated</th></tr></thead><tbody>'+
+  return dateBar('<button class="btn ghost sm" onclick="dlCsv()">Download Excel (CSV)</button> <button class="btn sm" onclick="snapshot(\'snapArea\',\'Store-wise\')">📷 Snapshot for WhatsApp</button>')+'<div class="glass pad" id="snapArea"><div class="snaphead"><b>APPS WINTER EOSS · STORE-WISE SELL-THRU</b><span>'+fDay(S.date)+' · '+(function(){var u=lastUpload();return u?'Last update '+fD(u.at.slice(0,10))+', '+fT(u.at):'';})()+'</span></div><div class="tw"><table><thead><tr><th>Store</th><th>Opening stock</th><th>Target</th><th>Sale qty</th><th>Sale value</th><th>Sell-thru</th><th>Balance stock</th><th>Updated</th></tr></thead><tbody>'+
    rs.map(function(r){return '<tr class="click'+(r.s===me?' me':'')+'" onclick="go(\'store\',\''+r.s+'\')"><td><b>'+r.s+'</b> '+esc(r.name)+'</td><td>'+n0(r.open)+'</td><td>'+n0(r.tgt)+'</td><td><b>'+n0(r.today)+'</b></td><td>₹'+n0(r.val)+'</td><td>'+chip(r.st)+'</td><td>'+n0(r.bal)+'</td><td class="sub">'+(r.at?fT(r.at):'–')+'</td></tr>';}).join('')+
    '<tr class="tot"><td>Region total</td><td>'+n0(t.open)+'</td><td>'+n0(t.tgt)+'</td><td>'+n0(t.today)+'</td><td>₹'+n0(t.val)+'</td><td>'+chip(t.st)+'</td><td>'+n0(t.bal)+'</td><td></td></tr></tbody></table></div>'+legend()+'<div class="sub" style="margin-top:6px">Tap a store for division and article detail.</div></div>';
 }
@@ -558,16 +558,17 @@ function vStore(){
 /* ---------- snapshot for WhatsApp ---------- */
 var SNAP=null;
 function loadH2C(){return window.html2canvas?Promise.resolve():new Promise(function(res,rej){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=res;s.onerror=function(){rej(new Error('Could not load the snapshot tool – check internet'));};document.head.appendChild(s);});}
-function snapshot(){
+function snapshot(id,label){
+  id=id||'snapArea';label=label||'Store-wise';
   toast('Preparing snapshot…');
-  loadH2C().then(function(){document.body.classList.add('snapping');return html2canvas($('snapArea'),{backgroundColor:'#ffffff',scale:2});})
-  .then(function(cv){document.body.classList.remove('snapping');cv.toBlob(function(b){if(SNAP)URL.revokeObjectURL(SNAP.url);SNAP={blob:b,url:URL.createObjectURL(b),name:'EOSS-Store-wise-'+S.date+'.png'};showSnap();},'image/png');})
+  loadH2C().then(function(){document.body.classList.add('snapping');return html2canvas($(id),{backgroundColor:'#ffffff',scale:2,windowWidth:Math.max(window.innerWidth,1000),ignoreElements:function(el){return el.classList&&el.classList.contains('nosnap');}});})
+  .then(function(cv){document.body.classList.remove('snapping');cv.toBlob(function(b){if(SNAP)URL.revokeObjectURL(SNAP.url);SNAP={blob:b,url:URL.createObjectURL(b),name:'EOSS-'+label+'-'+S.date+'.png'};showSnap();},'image/png');})
   .catch(function(e){document.body.classList.remove('snapping');toast(e.message);});
 }
 function showSnap(){
   var canShare=false;try{canShare=!!(navigator.canShare&&navigator.canShare({files:[new File([SNAP.blob],SNAP.name,{type:'image/png'})]}));}catch(e){}
   var m=document.createElement('div');m.className='modal';m.id='snapModal';
-  m.innerHTML='<div class="glass" style="max-width:720px;width:100%;padding:16px;max-height:92vh;overflow:auto"><div style="font-weight:900;color:var(--blue);margin-bottom:8px">Snapshot ready</div><img src="'+SNAP.url+'" alt="Store-wise sell-thru snapshot" style="width:100%;border:1px solid #e3e7ee;border-radius:8px"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+  m.innerHTML='<div class="glass" style="max-width:720px;width:100%;padding:16px;max-height:92vh;overflow:auto"><div style="font-weight:900;color:var(--blue);margin-bottom:8px">Snapshot ready</div><img src="'+SNAP.url+'" alt="Sell-thru snapshot" style="width:100%;border:1px solid #e3e7ee;border-radius:8px"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
    (canShare?'<button class="btn" onclick="snapShare()">Share to WhatsApp</button>':'')+
    '<button class="btn blue" onclick="snapCopy()">Copy image</button><button class="btn ghost" onclick="snapDownload()">Download image</button><button class="btn ghost" onclick="closeSnap()">Close</button></div>'+
    '<div class="sub" style="margin-top:8px">'+(canShare?'Share opens your phone\'s share menu – pick WhatsApp and the store group.':'Copy, then paste (Ctrl+V) in WhatsApp Web / Desktop, or download and attach.')+'</div></div>';
