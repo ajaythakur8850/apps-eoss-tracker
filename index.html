@@ -125,6 +125,7 @@ html.standalone .instBtn{display:none!important}
 .sortth{cursor:pointer;user-select:none;white-space:nowrap}.sortth .ar{font-size:10px;color:#8aa0b6;margin-left:3px}.sortth.on{color:#0068A9}.sortth.on .ar{color:#C2006F}.sortth:hover{background:#e2eef8}
 .fltbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}.chipbtn{border:1px solid #cfd8e3;background:#fff;border-radius:16px;padding:5px 11px;font-size:12px;font-weight:600;color:#36506b;cursor:pointer;min-height:30px}.chipbtn.on{background:#0068A9;border-color:#0068A9;color:#fff}
 body.snapping .sortth .ar{display:none}
+.capbanner{background:#0068A9;color:#fff;font-weight:900;font-size:20px;letter-spacing:.02em;padding:10px 14px;border-radius:8px;margin-bottom:10px;text-align:left}
 </style>
 </head>
 <body>
@@ -741,15 +742,15 @@ var SNAP=null;
 function loadH2C(){return window.html2canvas?Promise.resolve():new Promise(function(res,rej){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=res;s.onerror=function(){rej(new Error('Could not load the snapshot tool – check internet'));};document.head.appendChild(s);});}
 function snapshot(id,label){
   id=id||'snapArea';label=label||'Store-wise';
-  toast('Preparing snapshot…');
-  loadH2C().then(function(){document.body.classList.add('snapping');document.body.classList.toggle('snapfull',id==='snapFull');return html2canvas($(id),{backgroundColor:'#ffffff',scale:2,windowWidth:Math.max(window.innerWidth,1000),ignoreElements:function(el){return el.classList&&el.classList.contains('nosnap');}});})
-  .then(function(cv){document.body.classList.remove('snapping','snapfull');cv.toBlob(function(b){if(SNAP)URL.revokeObjectURL(SNAP.url);SNAP={blob:b,url:URL.createObjectURL(b),name:(Z()?'FMCG-ZeroSale-':'EOSS-')+label+'-'+S.date+'.png'};showSnap();},'image/png');})
-  .catch(function(e){document.body.classList.remove('snapping','snapfull');toast(e.message);});
+  toast('Preparing snapshot…');var cap=snapCaption(),bn=null;
+  loadH2C().then(function(){document.body.classList.add('snapping');try{bn=document.createElement('div');bn.className='capbanner';bn.textContent=cap;$(id).insertBefore(bn,$(id).firstChild);}catch(e){}document.body.classList.toggle('snapfull',id==='snapFull');return html2canvas($(id),{backgroundColor:'#ffffff',scale:2,windowWidth:Math.max(window.innerWidth,1000),ignoreElements:function(el){return el.classList&&el.classList.contains('nosnap');}});})
+  .then(function(cv){if(bn)bn.remove();document.body.classList.remove('snapping','snapfull');cv.toBlob(function(b){if(SNAP)URL.revokeObjectURL(SNAP.url);SNAP={blob:b,url:URL.createObjectURL(b),cap:cap,name:(Z()?'FMCG-ZeroSale-':'EOSS-')+label+'-'+S.date+'.png'};showSnap();},'image/png');})
+  .catch(function(e){if(bn)bn.remove();document.body.classList.remove('snapping','snapfull');toast(e.message);});
 }
 function showSnap(){
   var canShare=false;try{canShare=!!(navigator.canShare&&navigator.canShare({files:[new File([SNAP.blob],SNAP.name,{type:'image/png'})]}));}catch(e){}
   var m=document.createElement('div');m.className='modal';m.id='snapModal';
-  m.innerHTML='<div class="glass" style="max-width:720px;width:100%;padding:16px;max-height:92vh;overflow:auto"><div style="font-weight:900;color:var(--blue);margin-bottom:8px">Snapshot ready</div><img src="'+SNAP.url+'" alt="Sell-thru snapshot" style="width:100%;border:1px solid #e3e7ee;border-radius:8px"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+  m.innerHTML='<div class="glass" style="max-width:720px;width:100%;padding:16px;max-height:92vh;overflow:auto"><div style="font-weight:900;color:var(--blue);margin-bottom:8px">Snapshot ready</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#EFF6FA;border-radius:8px;padding:8px 10px;margin-bottom:10px"><span style="font-size:12px;color:#6C757D">Message:</span><b id="snapCapTxt" style="flex:1;min-width:160px">'+esc(SNAP.cap)+'</b><button class="btn ghost sm" onclick="copyCap()">Copy message</button></div><img src="'+SNAP.url+'" alt="Sell-thru snapshot" style="width:100%;border:1px solid #e3e7ee;border-radius:8px"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
    (canShare?'<button class="btn" onclick="snapShare()">Share to WhatsApp</button>':'')+
    '<button class="btn blue" onclick="snapCopy()">Copy image</button><button class="btn ghost" onclick="snapDownload()">Download image</button><button class="btn ghost" onclick="closeSnap()">Close</button></div>'+
    '<div class="sub" style="margin-top:8px">'+(canShare?'Share opens your phone\'s share menu – pick WhatsApp and the store group.':'Copy, then paste (Ctrl+V) in WhatsApp Web / Desktop, or download and attach.')+'</div></div>';
@@ -757,7 +758,10 @@ function showSnap(){
 }
 function closeSnap(){var m=$('snapModal');if(m)m.remove();}
 function snapCaption(){var n=new Date(),h=n.getHours(),m=n.getMinutes(),t=((h%12)||12)+':'+(m<10?'0':'')+m+' '+(h<12?'AM':'PM');return (Z()?'FMCG Zero Sale Till ':'Apps EOSS Sale Till ')+t;}
-function snapShare(){var f=new File([SNAP.blob],SNAP.name,{type:'image/png'}),cap=snapCaption();try{navigator.clipboard&&navigator.clipboard.writeText(cap).catch(function(){});}catch(e){}navigator.share({files:[f],title:cap,text:cap}).catch(function(){});}
+function isIOS(){var u=navigator.userAgent||'';return /iPhone|iPad|iPod/i.test(u)||(/Macintosh/.test(u)&&'ontouchend' in document);}
+function copyCap(){var c=SNAP&&SNAP.cap||snapCaption();try{navigator.clipboard.writeText(c).then(function(){toast('Message copied – paste it in WhatsApp');},function(){toast(c);});}catch(e){toast(c);}}
+function snapShare(){var f=new File([SNAP.blob],SNAP.name,{type:'image/png'}),cap=SNAP.cap||snapCaption();try{navigator.clipboard&&navigator.clipboard.writeText(cap).catch(function(){});}catch(e){}
+  var data=isIOS()?{files:[f]}:{files:[f],title:cap,text:cap};navigator.share(data).catch(function(){});}
 function snapCopy(){try{navigator.clipboard.write([new ClipboardItem({'image/png':SNAP.blob})]).then(function(){toast('Image copied – paste it in WhatsApp');},function(){toast('Copy not allowed here – use Download');});}catch(e){toast('Copy not supported on this device – use Share or Download');}}
 function snapDownload(){var a=document.createElement('a');a.href=SNAP.url;a.download=SNAP.name;document.body.appendChild(a);a.click();a.remove();}
 
