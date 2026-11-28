@@ -756,7 +756,8 @@ function showSnap(){
   document.body.appendChild(m);
 }
 function closeSnap(){var m=$('snapModal');if(m)m.remove();}
-function snapShare(){var f=new File([SNAP.blob],SNAP.name,{type:'image/png'});navigator.share({files:[f],title:'EOSS Store-wise Sell-thru',text:'Apps Winter EOSS – Store-wise sell-thru '+fDay(S.date)}).catch(function(){});}
+function snapCaption(){var n=new Date(),h=n.getHours(),m=n.getMinutes(),t=((h%12)||12)+':'+(m<10?'0':'')+m+' '+(h<12?'AM':'PM');return (Z()?'FMCG Zero Sale Till ':'Apps EOSS Sale Till ')+t;}
+function snapShare(){var f=new File([SNAP.blob],SNAP.name,{type:'image/png'}),cap=snapCaption();try{navigator.clipboard&&navigator.clipboard.writeText(cap).catch(function(){});}catch(e){}navigator.share({files:[f],title:cap,text:cap}).catch(function(){});}
 function snapCopy(){try{navigator.clipboard.write([new ClipboardItem({'image/png':SNAP.blob})]).then(function(){toast('Image copied – paste it in WhatsApp');},function(){toast('Copy not allowed here – use Download');});}catch(e){toast('Copy not supported on this device – use Share or Download');}}
 function snapDownload(){var a=document.createElement('a');a.href=SNAP.url;a.download=SNAP.name;document.body.appendChild(a);a.click();a.remove();}
 
