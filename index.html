@@ -122,6 +122,9 @@ html.th-navy .toolbar>.sub,html.th-navy .wrap>.sub{color:#c8d2e0}
 html.standalone .instBtn{display:none!important}
 #instModal{z-index:70}#instModal ol{margin:8px 0 0;padding-left:20px;line-height:1.7;font-size:14px}
 .navcol{display:flex;flex-direction:column;align-items:stretch;gap:4px;margin-right:8px}.navbtns{display:flex;gap:4px}.navbtns .navb{flex:1}.navb{min-width:36px;height:28px;padding:0 8px!important;font-size:22px!important;line-height:1;font-weight:700}.navb:disabled{opacity:.35;cursor:default}
+.sortth{cursor:pointer;user-select:none;white-space:nowrap}.sortth .ar{font-size:10px;color:#8aa0b6;margin-left:3px}.sortth.on{color:#0068A9}.sortth.on .ar{color:#C2006F}.sortth:hover{background:#e2eef8}
+.fltbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}.chipbtn{border:1px solid #cfd8e3;background:#fff;border-radius:16px;padding:5px 11px;font-size:12px;font-weight:600;color:#36506b;cursor:pointer;min-height:30px}.chipbtn.on{background:#0068A9;border-color:#0068A9;color:#fff}
+body.snapping .sortth .ar{display:none}
 </style>
 </head>
 <body>
@@ -644,10 +647,17 @@ function vDash(){
    '</div>'+legend()+'</div></div></div>';
   return h;
 }
+function sortBy(k){var o=S.sort||{};S.sort=(o.k===k)?{k:k,d:-o.d}:{k:k,d:-1};render();}
+function sortTh(k,lab){var o=S.sort||{},on=o.k===k,ar=on?(o.d<0?' ▼':' ▲'):' ⇅';return '<th class="sortth'+(on?' on':'')+'" onclick="sortBy(\''+k+'\')" title="Tap to sort">'+lab+'<span class="ar">'+ar+'</span></th>';}
+function setShow(v){S.show=v;render();}
 function vStores(){
-  var rs=rows(S.date),t=totals(rs),me=myStore();
-  return dateBar('<button class="btn ghost sm" onclick="dlCsv()">Download Excel (CSV)</button> <button class="btn sm" onclick="snapshot(\'snapArea\',\'Store-wise\')">📷 Snapshot</button>')+'<div class="glass pad" id="snapArea"><div class="snaphead"><b>'+TRK[MODE].tag+' · STORE-WISE SELL-THRU</b><span>'+fDay(S.date)+' · '+(function(){var u=lastUpload();return u?'Last update '+fD(u.at.slice(0,10))+', '+fT(u.at):'';})()+'</span></div><div class="tw"><table><thead><tr><th>Store</th><th>'+L('open')+'</th><th>Target</th><th>'+L('sold')+'</th><th>Sale value</th><th>Sell-thru</th><th>'+L('bal')+'</th><th>Updated</th></tr></thead><tbody>'+
-   rs.map(function(r){return '<tr class="click'+(r.s===me?' me':'')+'" onclick="go(\'store\',\''+r.s+'\')"><td><b>'+r.s+'</b> '+esc(r.name)+'</td><td>'+n0(r.open)+'</td><td>'+n0(r.tgt)+'</td><td><b>'+n0(r.today)+'</b></td><td>₹'+n0(r.val)+'</td><td>'+chip(r.st)+'</td><td>'+n0(r.bal)+'</td><td class="sub">'+(r.at?fT(r.at):'–')+'</td></tr>';}).join('')+
+  var all=rows(S.date),t=totals(all),me=myStore(),rs=all.slice(),sh=S.show||'all',tp=DAILY_TARGET_PCT,R1=function(r){return Math.round(r.st*10)/10;};
+  if(sh==='below')rs=rs.filter(function(r){return R1(r)<tp;});else if(sh==='met')rs=rs.filter(function(r){return R1(r)>=tp;});else if(sh==='none')rs=rs.filter(function(r){return !r.today;});
+  if(S.sort&&S.sort.k){var k=S.sort.k,d=S.sort.d;rs.sort(function(a,b){return ((a[k]||0)-(b[k]||0))*d||a.s.localeCompare(b.s);});}
+  var nb=all.filter(function(r){return R1(r)<tp;}).length,nm=all.length-nb,nn=all.filter(function(r){return !r.today;}).length;
+  var flt='<div class="fltbar nosnap"><span class="sub">Show:</span>'+[['all','All stores ('+all.length+')'],['below','Below target ('+nb+')'],['met','Target achieved ('+nm+')'],['none','No sale yet ('+nn+')']].map(function(o){return '<button class="chipbtn'+(sh===o[0]?' on':'')+'" onclick="setShow(\''+o[0]+'\')">'+o[1]+'</button>';}).join('')+(S.sort&&S.sort.k?'<button class="chipbtn" onclick="S.sort=null;render()">✕ Clear sort</button>':'')+'</div>';
+  return dateBar('<button class="btn ghost sm" onclick="dlCsv()">Download Excel (CSV)</button> <button class="btn sm" onclick="snapshot(\'snapArea\',\'Store-wise\')">📷 Snapshot</button>')+'<div class="glass pad" id="snapArea"><div class="snaphead"><b>'+TRK[MODE].tag+' · STORE-WISE SELL-THRU</b><span>'+fDay(S.date)+' · '+(function(){var u=lastUpload();return u?'Last update '+fD(u.at.slice(0,10))+', '+fT(u.at):'';})()+'</span></div>'+flt+'<div class="tw"><table><thead><tr><th>Store</th><th>'+L('open')+'</th><th>Target</th>'+sortTh('today',L('sold'))+sortTh('val','Sale value')+sortTh('st','Sell-thru')+'<th>'+L('bal')+'</th><th>Updated</th></tr></thead><tbody>'+
+   (rs.length?'':'<tr><td colspan="8" class="sub" style="text-align:center;padding:14px">No store in this filter.</td></tr>')+rs.map(function(r){return '<tr class="click'+(r.s===me?' me':'')+'" onclick="go(\'store\',\''+r.s+'\')"><td><b>'+r.s+'</b> '+esc(r.name)+'</td><td>'+n0(r.open)+'</td><td>'+n0(r.tgt)+'</td><td><b>'+n0(r.today)+'</b></td><td>₹'+n0(r.val)+'</td><td>'+chip(r.st)+'</td><td>'+n0(r.bal)+'</td><td class="sub">'+(r.at?fT(r.at):'–')+'</td></tr>';}).join('')+
    '<tr class="tot"><td>Region total</td><td>'+n0(t.open)+'</td><td>'+n0(t.tgt)+'</td><td>'+n0(t.today)+'</td><td>₹'+n0(t.val)+'</td><td>'+chip(t.st)+'</td><td>'+n0(t.bal)+'</td><td></td></tr></tbody></table></div>'+legend()+'<div class="sub" style="margin-top:6px">Tap a store for division and article detail.</div></div>';
 }
 function vHourly(){
