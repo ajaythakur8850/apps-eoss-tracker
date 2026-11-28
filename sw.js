@@ -1,7 +1,7 @@
 // Leave Planner service worker: makes the portal installable and opens fast.
 // Pages are fetched fresh when online (so updates show at once); the saved copy is used only offline.
 // Requests to the Google backend are never cached.
-const CACHE = 'store-trackers-v5';
+const CACHE = 'daily-tracker-v6';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener('activate', e => {

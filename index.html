@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="th-band">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,7 +9,7 @@
 <meta property="og:title" content="Daily Tracker – Jharkhand"><meta property="og:description" content="FMCG Zero Sale and Apps Winter EOSS – store-wise daily tracking">
 <meta property="og:image" content="https://ajaythakur8850.github.io/daily-tracker/icon-512.png"><meta property="og:image:width" content="512"><meta property="og:image:height" content="512">
 <meta property="og:url" content="https://ajaythakur8850.github.io/daily-tracker/"><meta property="og:type" content="website">
-<meta name="theme-color" content="#5b7fd6">
+<meta name="theme-color" content="#0068A9">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -103,6 +103,21 @@ body.snapping #snapArea{width:max-content;min-width:760px}body.snapping #snapAre
 .lg-n{margin:18px 28px 0;font-size:12px;color:#495057;text-align:center;line-height:1.6}
 #loginView .err:empty{display:none}
 .lg-f{margin-top:auto;text-align:center;font-size:11px;color:#6C757D;padding:14px}
+
+/* ---- theme options (sample) ---- */
+html.th-clean,html.th-band,html.th-soft,html.th-navy,html.th-slate{background:#F4F6F9}
+html.th-clean .snow,html.th-band .snow,html.th-soft .snow,html.th-slate .snow{display:none}
+html.th-clean .glass,html.th-band .glass,html.th-soft .glass,html.th-slate .glass{background:#fff;border:1px solid #E3E7EE;box-shadow:0 1px 4px rgba(20,40,80,.06)}
+html.th-clean .tab,html.th-band .tab,html.th-soft .tab,html.th-slate .tab{background:#fff;border:1px solid #DEE2E6;color:#36506b}
+html.th-band{background:linear-gradient(#0068A9 0,#0068A9 var(--band,130px),#F4F6F9 var(--band,130px)) no-repeat,#F4F6F9}
+html.th-band .tabs .tab{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.35);color:#fff}html.th-band .tabs .tab.on{background:#fff;color:#0068A9}
+html.th-soft{background:#E8F1F9}
+html.th-slate{background:#E9ECEF}html.th-slate .top{background:#1f2a37;border-color:#1f2a37}html.th-slate .top .t{color:#fff}html.th-slate .top .who{color:#cbd3dc}html.th-slate .top .t .sub,html.th-slate .thpick{color:#cbd3dc!important}
+html.th-navy{background:#0f1b33}html.th-navy .snow{opacity:.18}
+html.th-navy .glass{background:#fff;border:1px solid #fff;box-shadow:none}
+html.th-navy .tab{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#e6ecf5}
+html.th-navy .toolbar>.sub,html.th-navy .wrap>.sub{color:#c8d2e0}
+.thpick{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut)}.thpick select{width:auto;padding:4px 6px;font-size:12px}
 </style>
 </head>
 <body>
@@ -497,6 +512,9 @@ function openPin(force){$('pinModal').classList.remove('hidden');$('pErr').textC
 function closePin(){$('pinModal').classList.add('hidden');}
 function savePin(){if($('pNew').value!==$('pNew2').value){$('pErr').textContent='New PINs do not match.';return;}
   api('changePin',{oldPin:$('pOld').value,newPin:$('pNew').value}).then(function(r){S.token=r.token;ls('eoss_tok2',r.token);closePin();toast('PIN changed');}).catch(function(e){$('pErr').textContent=e.message;});}
+function setTheme(t){document.documentElement.className=t||'';}
+function setBand(){try{var t=$('tabs'),tp=document.querySelector('#appView .top'),el=(t&&t.offsetParent&&t.children.length)?t:tp;if(!el)return;var b=el.getBoundingClientRect().bottom+window.scrollY+(el===t?6:22);document.documentElement.style.setProperty('--band',Math.round(b)+'px');}catch(e){}}
+window.addEventListener('resize',setBand);
 function showApp(){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');refresh();}
 function refresh(){
   return api('eossLoad').then(function(d){return (BUILT.eoss&&BUILT.zs?Promise.resolve():loadStock(d.key)).then(function(){return d;});}).then(function(d){
@@ -546,7 +564,8 @@ function vHome(){
 }
 var TITLES={dash:'Region Dashboard',stores:'Store-wise',hourly:'Hourly Tracker',divs:'Division-wise',upload:'Upload Sale Excel',store:'Store Detail'};
 function go(v,arg){S.view=v;if(v==='store')S.store=arg;render();window.scrollTo(0,0);}
-function render(){
+function render(){render0();setBand();}
+function render0(){
   ZC={};
   var home=S.view==='home',up=S.view==='upload';$('homeBtn').classList.toggle('hidden',home);$('upBtn').classList.toggle('hidden',!home);
   $('trkName').textContent=home?'Jharkhand Store Trackers':up?'Upload Hourly Sale Report':TRK[MODE].name;$('tabs').classList.toggle('hidden',home||up);
@@ -744,6 +763,7 @@ function dlCsv(){var rs=rows(S.date),LN=[['Date','Store','Name',L('open'),'Targe
 
 /* ---------- start ---------- */
 (function(){
+  setTheme('th-band');
   if(location.protocol==='https:'&&'serviceWorker' in navigator){try{navigator.serviceWorker.register('sw.js').catch(function(){});}catch(e){}}
   if(!API_URL){$('demobar').classList.remove('hidden');$('demoHint').classList.remove('hidden');
     $('demoHint').innerHTML='<b>Sample login</b>: E-Code <b>6012345</b> · PIN <b>1234</b>';}
