@@ -121,6 +121,7 @@ html.th-navy .toolbar>.sub,html.th-navy .wrap>.sub{color:#c8d2e0}
 .inst-btn{background:#fff;color:#0068A9;border:1.5px solid #0068A9;border-radius:24px;padding:10px 18px;font-weight:700;font-size:14px;cursor:pointer;min-height:44px}
 html.standalone .instBtn{display:none!important}
 #instModal{z-index:70}#instModal ol{margin:8px 0 0;padding-left:20px;line-height:1.7;font-size:14px}
+.navbtns{display:inline-flex;gap:4px;margin-right:6px}.navb{min-width:36px;height:34px;padding:0 8px!important;font-size:22px!important;line-height:1;font-weight:700}.navb:disabled{opacity:.35;cursor:default}
 </style>
 </head>
 <body>
@@ -152,7 +153,7 @@ html.standalone .instBtn{display:none!important}
 <!-- APP -->
 <div id="appView" class="wrap hidden">
   <div class="top glass">
-    <button class="btn ghost sm hidden" id="homeBtn" onclick="goHome()">⌂ Home</button><div class="t"><span id="trkName">Jharkhand Store Trackers</span> <span class="sub" style="font-weight:500">· Jharkhand</span></div>
+    <span class="navbtns"><button class="btn ghost sm navb" id="navBack" onclick="navGo(-1)" aria-label="Previous page" title="Previous page">‹</button><button class="btn ghost sm navb" id="navFwd" onclick="navGo(1)" aria-label="Next page" title="Next page">›</button></span><button class="btn ghost sm hidden" id="homeBtn" onclick="goHome()">⌂ Home</button><div class="t"><span id="trkName">Jharkhand Store Trackers</span> <span class="sub" style="font-weight:500">· Jharkhand</span></div>
     <div class="who"><b id="whoName"></b><br><span id="whoRole"></span></div>
     <button class="btn ghost sm" onclick="openPin()">Change PIN</button>
     <div style="display:flex;flex-direction:column;gap:4px;align-items:stretch">
@@ -512,7 +513,7 @@ function doLogin(){
   api('login',{emp:e,pin:p}).then(function(r){S.view='home';S.divStore=null;S.date=null;S.token=r.token;S.user=r.user;ls('eoss_tok2',r.token);$('lPin').value='';showApp();if(r.mustChange)openPin(true);})
   .catch(function(er){$('lErr').textContent=er.message;}).then(function(){$('lBtn').disabled=false;});
 }
-function logout(){S.view='home';S.token=null;S.data=null;ls('eoss_tok2',null);$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');}
+function logout(){navReset();S.view='home';S.token=null;S.data=null;ls('eoss_tok2',null);$('appView').classList.add('hidden');$('loginView').classList.remove('hidden');}
 function openPin(force){$('pinModal').classList.remove('hidden');$('pErr').textContent='';['pOld','pNew','pNew2'].forEach(function(i){$(i).value='';});$('pinNote').textContent=force?'First sign-in: please set your own PIN (not 1234).':'';$('pCancel').classList.toggle('hidden',!!force);}
 function closePin(){$('pinModal').classList.add('hidden');}
 function savePin(){if($('pNew').value!==$('pNew2').value){$('pErr').textContent='New PINs do not match.';return;}
@@ -586,7 +587,25 @@ function vHome(){
 }
 var TITLES={dash:'Region Dashboard',stores:'Store-wise',hourly:'Hourly Tracker',divs:'Division-wise',upload:'Upload Sale Excel',store:'Store Detail'};
 function go(v,arg){S.view=v;if(v==='store')S.store=arg;render();window.scrollTo(0,0);}
-function render(){render0();setBand();}
+function render(){render0();setBand();navRecord();}
+/* ---------- page history: ‹ › buttons and phone Back ---------- */
+var NAV={stack:[],i:-1,busy:false};
+function navSnap(){return {view:S.view,mode:MODE,store:S.store||null,date:S.date||null,ds:S.divStore||null};}
+function navSame(a,b){return a&&b&&a.view===b.view&&a.mode===b.mode&&(a.view!=='store'||a.store===b.store);}
+function navRecord(){
+  if(NAV.busy||!S.token)return;var n=navSnap(),cur=NAV.stack[NAV.i];
+  if(navSame(cur,n)){NAV.stack[NAV.i]=n;navBtns();return;}
+  NAV.stack=NAV.stack.slice(0,NAV.i+1);NAV.stack.push(n);NAV.i++;
+  try{if(NAV.i===0)history.replaceState({nav:0},'');else history.pushState({nav:NAV.i},'');}catch(e){}
+  navBtns();
+}
+function navBtns(){var b=$('navBack'),f=$('navFwd');if(b)b.disabled=NAV.i<=0;if(f)f.disabled=NAV.i>=NAV.stack.length-1;}
+function navGo(d){var j=NAV.i+d;if(j<0||j>=NAV.stack.length)return;try{history.go(d);}catch(e){navShow(j);}}
+function navShow(j){var n=NAV.stack[j];if(!n)return;NAV.i=j;NAV.busy=true;
+  try{if(n.mode!==MODE)useMode(n.mode);S.view=n.view;S.store=n.store;if(n.date)S.date=n.date;S.divStore=n.ds;render();window.scrollTo(0,0);}finally{NAV.busy=false;}navBtns();}
+window.addEventListener('popstate',function(e){var j=e.state&&typeof e.state.nav==='number'?e.state.nav:null;if(j===null||!S.token)return;navShow(j);});
+function navReset(){NAV.stack=[];NAV.i=-1;navBtns();}
+
 function render0(){
   ZC={};
   var home=S.view==='home',up=S.view==='upload';$('homeBtn').classList.toggle('hidden',home);$('upBtn').classList.toggle('hidden',!home);
