@@ -1,7 +1,7 @@
 {
-  "name": "Apps Winter EOSS Tracker – Jharkhand",
-  "short_name": "EOSS Tracker",
-  "description": "Apps Winter EOSS sell-thru tracker – Jharkhand stores",
+  "name": "Jharkhand Store Trackers",
+  "short_name": "Store Trackers",
+  "description": "FMCG Zero Sale and Apps Winter EOSS trackers – Jharkhand stores",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -9,7 +9,17 @@
   "background_color": "#d9d5f3",
   "theme_color": "#5b7fd6",
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }

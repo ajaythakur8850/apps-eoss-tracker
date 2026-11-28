@@ -41,7 +41,8 @@ var EOSS_KEY              = '';       // unlocks stock.enc on the EOSS page; giv
 var SHEETS = {
   Users:        ['emp', 'name', 'role', 'store', 'pinHash', 'mustChange', 'active', 'dept'],
   EOSS_Sales:   ['key', 'date', 'store', 'at', 'by', 'val', 'arts', 'names'],
-  EOSS_Uploads: ['at', 'by', 'file', 'dates', 'stores', 'lines', 'matched', 'qty']
+  EOSS_Uploads: ['at', 'by', 'file', 'dates', 'stores', 'lines', 'matched', 'qty'],
+  ZS_Sales:     ['key', 'date', 'store', 'at', 'by', 'arts', 'vals']
 };
 
 var openSheet_ = function () { return SpreadsheetApp.openById(SHEET_ID); };
@@ -94,11 +95,19 @@ var handle_ = function (req) {
       sales[r.date][r.store] = { at: r.at, by: r.by, val: +r.val || 0, arts: a };
       Object.keys(n).forEach(function (k) { names[k] = n[k]; });
     });
+    var zs = {};
+    db.all('ZS_Sales').forEach(function (r) {
+      var a = {}, v = {};
+      try { a = JSON.parse(r.arts || '{}'); } catch (e) {}
+      try { v = JSON.parse(r.vals || '{}'); } catch (e) {}
+      zs[r.date] = zs[r.date] || {};
+      zs[r.date][r.store] = { at: r.at, by: r.by, arts: a, val: v };
+    });
     var ups = db.all('EOSS_Uploads').slice(-30).map(function (x) {
       return { at: x.at, by: x.by, file: x.file, dates: String(x.dates).split(',').filter(String),
                stores: +x.stores || 0, lines: +x.lines || 0, matched: +x.matched || 0, qty: +x.qty || 0 };
     });
-    return { user: u, sales: sales, hourly: {}, uploads: ups, names: names, key: EOSS_KEY };
+    return { user: u, sales: sales, hourly: {}, uploads: ups, names: names, key: EOSS_KEY, zs: { sales: zs } };
   }
   if (req.action === 'eossUpload') {
     var v;
@@ -117,7 +126,18 @@ var handle_ = function (req) {
         n++;
       });
     });
-    db.insert('EOSS_Uploads', { at: at, by: v.name, file: String(meta.file || '').slice(0, 80), dates: Object.keys(agg).join(','),
+    var zAgg = req.zsAgg || {}, zVal = req.zsVals || {}, zh = {};
+    db.all('ZS_Sales').forEach(function (r) { zh[r.key] = 1; });
+    Object.keys(zAgg).forEach(function (d) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+      Object.keys(zAgg[d]).forEach(function (s) {
+        var st = String(s).toUpperCase().slice(0, 8), vv = (zVal[d] && zVal[d][s]) || {}, vr = {};
+        Object.keys(vv).forEach(function (a) { vr[a] = Math.round((+vv[a] || 0) * 100) / 100; });
+        var rec = { key: d + '|' + st, date: d, store: st, at: at, by: v.name, arts: JSON.stringify(zAgg[d][s] || {}), vals: JSON.stringify(vr) };
+        if (zh[rec.key]) db.update('ZS_Sales', 'key', rec.key, rec); else { db.insert('ZS_Sales', rec); zh[rec.key] = 1; }
+      });
+    });
+    db.insert('EOSS_Uploads', { at: at, by: v.name, file: String(meta.file || '').slice(0, 80), dates: Object.keys(agg).concat(Object.keys(zAgg)).filter(function (x, i, a) { return a.indexOf(x) === i; }).join(','),
       stores: +meta.stores || 0, lines: +meta.lines || 0, matched: +meta.matched || 0, qty: +meta.qty || 0 });
     return { ok: true, stores: n };
   }
